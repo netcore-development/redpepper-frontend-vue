@@ -4,7 +4,7 @@
             <b-button v-b-modal.personaModal class="btn-success">Agregar</b-button>
 
             <b-modal id="personaModal" title="Agregar" size="lg" ok-title="Agregar" cancel-title="Limpiar"
-                     ok-variant="btn btn-success" @ok="postPersona">
+                     ok-variant="btn btn-success" @ok="postPersona" @cancel="limpiarPersona" @hidden="limpiarPersona">
                 <div>
                     <b-form>
                         <b-form-group
@@ -113,11 +113,12 @@
                 </div>
             </b-modal>
         </div>
+
         <!--  Modal Modificar      -->
         <div>
 
             <b-modal id="personaModificar" title="Actualizar" size="lg" ok-title="Actualizar" cancel-title="Limpiar"
-                     ok-variant="btn btn-success" @ok="putPersona">
+                     ok-variant="btn btn-success" @ok="putPersona" @hidden="limpiarPersona">
                 <div>
                     <b-form>
                         <b-form-group
@@ -226,25 +227,20 @@
                 </div>
             </b-modal>
         </div>
-        <!--Eliminar-->
-        <b-modal id="personaEliminar" title="Eliminar" size="lg" ok-title="Eliminar" cancel-title="Cancelar"
-                 ok-variant="btn btn-success" @ok="deletePersona()">
-            <p>Desea eliminar el registro?</p>
-        </b-modal>
         <br>
-        <table class="table table-hover table-bordered">
+        <table id="dtPersonas" class="table table-hover table-bordered">
             <thead>
             <tr>
                 <th>ID</th>
                 <th>Nombres</th>
                 <th>Apellidos</th>
                 <th>Sexo</th>
-                <!--                <th>Fecha Nacimiento</th>-->
+                <th>Fecha Nacimiento</th>
                 <th>DUI</th>
                 <th>NIT</th>
                 <th>Direccion</th>
                 <th>Telefono</th>
-                <th>Email</th>
+                <!--                <th>Email</th>-->
                 <th>Acciones</th>
             </tr>
             </thead>
@@ -254,31 +250,39 @@
                 <td>{{persona.nombres}}</td>
                 <td>{{persona.apellidos}}</td>
                 <td>{{persona.sexo}}</td>
-                <!--                <td>{{persona.fechaNacimiento}}</td>-->
+                <td>{{moment(persona.fechaNacimiento).format('DD/MM/YYYY')}}</td>
                 <td>{{persona.dui}}</td>
                 <td>{{persona.nit}}</td>
                 <td>{{persona.direccion}}</td>
                 <td>{{persona.telefono}}</td>
-                <td>{{persona.correoElectronico}}</td>
+                <!--                <td>{{persona.correoElectronico}}</td>-->
                 <td>
-                    <button v-b-modal.personaModificar class="btn btn-info" @click="llenarModal(persona)">Modificar
-                    </button>
+                    <div class="row">
+                        <button v-b-modal.personaModificar class="btn btn-info ml-2 mr-1"
+                                @click="obtenerPersonaModificar(persona.id)">
+                            <font-awesome-icon icon="user-edit" size="sm"/>
+                        </button>
 
-                    <button v-b-modal.personaEliminar class="btn btn-danger mt-1" @click="llenarModal(persona)">
-                        Eliminar
-                    </button>
+                        <button class="btn btn-danger" @click="obtenerPersonaEliminar(persona.id)">
+                            <font-awesome-icon icon="times" size="sm"/>
+                        </button>
+                    </div>
+
                 </td>
             </tr>
             </tbody>
         </table>
 
-
     </div>
+
 
 </template>
 
 <script>
     import axios from 'axios';
+    import Swal from 'sweetalert2';
+    import moment from "moment";
+
 
     export default {
         mounted() {
@@ -297,7 +301,8 @@
                     nit: '',
                     telefono: '',
                     correoElectronico: ''
-                }
+                },
+                showModal: false
             }
         },
         methods: {
@@ -315,35 +320,100 @@
                 axios.post('http://localhost:5000/api/personas', this.persona)
                     .then(response => {
                         console.log(response.data);
+                        if (response) {
+                            Swal.fire(
+                                "Almacenado",
+                                "La persona se añadió correctamente",
+                                "success"
+                            );
+                        }
+
                         this.getPersonas();
                     })
                     .catch(error => {
                         console.log(error);
                     })
+            },
+            obtenerPersonaModificar(id) {
+                axios.get(`http://localhost:5000/api/personas/${id}`)
+                    .then(response => {
+                        this.showModal = true;
+                        this.persona.id = id;
+                        this.persona.nombres = response.data.nombres,
+                            this.persona.apellidos = response.data.apellidos,
+                            this.persona.sexo = response.data.sexo,
+                            this.persona.fechaNacimiento = moment(response.data.fechaNacimiento).format("YYYY-MM-DD"),
+                            this.persona.direccion = response.data.direccion,
+                            this.persona.dui = response.data.dui,
+                            this.persona.nit = response.data.nit,
+                            this.persona.telefono = response.data.telefono,
+                            this.persona.correoElectronico = response.data.correoElectronico
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+
+
             },
             putPersona() {
                 axios.put('http://localhost:5000/api/personas', this.persona)
                     .then(response => {
                         console.log(response.data);
+                        Swal.fire(
+                            "Almacenado",
+                            "La persona se actualizó correctamente",
+                            "success"
+                        );
                         this.getPersonas();
                     })
                     .catch(error => {
                         console.log(error);
                     })
             },
-            llenarModal(persona) {
-                this.persona.id = persona.id,
-                    this.persona.nombres = persona.nombres,
-                    this.persona.apellidos = persona.apellidos,
-                    this.persona.sexo = persona.sexo,
-                    this.persona.direccion = persona.direccion,
-                    this.persona.dui = persona.dui,
-                    this.persona.nit = persona.nit,
-                    this.persona.telefono = persona.telefono,
-                    this.persona.correoElectronico = persona.correoElectronico
+            limpiarPersona() {
+                this.persona = {
+                    nombres: '',
+                    apellidos: '',
+                    sexo: null,
+                    fechaNacimiento: '',
+                    direccion: '',
+                    dui: '',
+                    nit: '',
+                    telefono: '',
+                    correoElectronico: ''
+                };
+                this.showModal = false;
             },
-            deletePersona() {
-                axios.delete(`http://localhost:5000/api/personas/${this.persona.id}`)
+            obtenerPersonaEliminar(id) {
+                axios.get(`http://localhost:5000/api/personas/${id}`);
+                Swal.fire({
+                    title: "¿Estás seguro/a?",
+                    text: "Una persona eliminada no se puede recuperar",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Sí, eliminar!",
+                    cancelButtonText: "Cancelar"
+                }).then(result => {
+                    if (result.value) {
+                        Swal.fire(
+                            "Eliminado!",
+                            "El registro se eliminó correctamente.",
+                            "success"
+                        );
+                        this.persona.id = id;
+                        this.deletePersona(id);
+                    } else {
+                        return;
+                    }
+
+                    this.limpiarPersona();
+
+                });
+            },
+            deletePersona(id) {
+                axios.delete(`http://localhost:5000/api/personas/${id}`)
                     .then(response => {
 
                         this.getPersonas()
