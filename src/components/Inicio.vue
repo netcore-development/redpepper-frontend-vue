@@ -4,7 +4,7 @@
             <b-button v-b-modal.personaModal class="btn-success">Agregar</b-button>
 
             <b-modal id="personaModal" title="Agregar" size="lg" ok-title="Agregar" cancel-title="Limpiar"
-                     ok-variant="btn btn-success" @ok="postPersona" @cancel="limpiarPersona" @hidden="limpiarPersona">
+                     ok-variant="btn btn-success" @ok="postPersona" @cancel.prevent="limpiarPersona" @hidden="limpiarPersona">
                 <div>
                     <b-form>
                         <b-form-group
@@ -117,8 +117,8 @@
         <!--  Modal Modificar      -->
         <div>
 
-            <b-modal id="personaModificar" title="Actualizar" size="lg" ok-title="Actualizar" cancel-title="Limpiar"
-                     ok-variant="btn btn-success" @ok="putPersona" @hidden="limpiarPersona">
+            <b-modal id="personaModificar" title="Actualizar" size="lg" ok-title="Actualizar" cancel-title="Cancelar"
+                     ok-variant="btn btn-success" @ok="putPersona" @hidden="limpiarPersona" @cancel="limpiarPersona">
                 <div>
                     <b-form>
                         <b-form-group
